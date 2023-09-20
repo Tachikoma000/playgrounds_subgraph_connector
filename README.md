@@ -1,6 +1,6 @@
 # PlaygroundsAPI_SubgraphConnector
 
-Playgrounds API is a service provided by Playgrounds Analytics to streamlined interfacing with decentralized subgraphs and datasets
+Playgrounds API is a service provided by Playgrounds Analytics to streamline interfacing with decentralized subgraphs and datasets
 
 The `PlaygroundsSubgraphConnector` is a tool designed for agents to seamlessly interface with and query subgraphs on The Graph's decentralized network via Playgrounds API.
 
