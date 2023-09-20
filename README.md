@@ -2,7 +2,9 @@
 
 Playgrounds API is a service provided by Playgrounds Analytics to streamline interfacing with decentralized subgraphs and datasets
 
-The `PlaygroundsSubgraphConnector` is a tool designed for agents to seamlessly interface with and query subgraphs on The Graph's decentralized network via Playgrounds API.
+The `PlaygroundsSubgraphConnector` is a tool designed for LLM agents to seamlessly interface with and query subgraphs on The Graph's decentralized network via Playgrounds API.
+
+This tool is specifically designed to be used alongside [Llama index](https://github.com/jerryjliu/llama_index) or [langchain](https://python.langchain.com/docs/modules/agents/tools/custom_tools)
 
 - To learn more about Playgrounds API, please visit our website : https://playgrounds.network/
 - Obtain you Playgrounds API Key and get started for free here: https://app.playgrounds.network/signup
