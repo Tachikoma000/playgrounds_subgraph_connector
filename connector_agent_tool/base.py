@@ -1,10 +1,10 @@
-"""PlaygroundsSubgraphConnector."""
+"""PlaygroundsSubgraphConnectorToolSpec."""
 
 from typing import Optional, Union
 import requests
 from llama_hub.tools.graphql.base import GraphQLToolSpec
 
-class PlaygroundsSubgraphConnector(GraphQLToolSpec):
+class PlaygroundsSubgraphConnectorToolSpec(GraphQLToolSpec):
     """
     Connects to subgraphs on The Graph's decentralized network via the Playgrounds API.
     
@@ -69,4 +69,3 @@ class PlaygroundsSubgraphConnector(GraphQLToolSpec):
         except ValueError as e:
             # Handle JSON decoding errors
             return f"Error decoding JSON: {e}"
-

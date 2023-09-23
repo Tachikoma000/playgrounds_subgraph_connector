@@ -1,6 +1,6 @@
 import openai
 from llama_index.agent import OpenAIAgent
-from base import PlaygroundsSubgraphConnector
+from base import PlaygroundsSubgraphConnectorToolSpec
 
 """
 SIMPLE TEST 
