@@ -1,30 +1,53 @@
 import openai
 from llama_index.agent import OpenAIAgent
-# from llama_hub.tools.playgrounds_subgraph_introspector.base import PlaygroundsSubgraphIntrospectorToolSpec
-from base import PlaygroundsSubgraphIntrospectorToolSpec
+from base import PlaygroundsSubgraphInspectorToolSpec
 
-def simple_test():
+def inspect_subgraph(
+    openai_api_key: str,
+    playgrounds_api_key: str,
+    identifier: str,
+    use_deployment_id: bool,
+    user_prompt: str
+):
     """
-    Run a simple test introspecting the Uniswap V3 subgraph schema using OpenAIAgent and Playgrounds API.
+    Introspect a subgraph using OpenAIAgent and Playgrounds API with the provided parameters.
+    
+    Args:
+        openai_api_key (str): API key for OpenAI.
+        playgrounds_api_key (str): API key for Playgrounds.
+        identifier (str): Identifier for the subgraph or deployment.
+        use_deployment_id (bool): If True, uses deployment ID in the URL.
+        user_prompt (str): User's question or prompt for the agent.
+        
+    Returns:
+        str: Agent's response.
     """
     # Set the OpenAI API key
-    openai.api_key = 'YOUR_OPENAI_API_KEY'
+    openai.api_key = openai_api_key
     
-    # Initialize the tool specification with the subgraph's identifier and the Playgrounds API key
-    introspector_spec = PlaygroundsSubgraphIntrospectorToolSpec(
-        identifier="YOUR_SUBGRAPH_OR_DEPLOYMENT_IDENTIFIER", 
-        api_key="YOUR_PLAYGROUNDS_API_KEY", 
-        use_deployment_id=False  # Set to True if using Deployment ID
+    # Initialize the inspector with the provided parameters
+    inspector_spec = PlaygroundsSubgraphInspectorToolSpec(
+        identifier=identifier, 
+        api_key=playgrounds_api_key, 
+        use_deployment_id=use_deployment_id
     )
     
-    # Setup agent with the tool
-    agent = OpenAIAgent.from_tools(introspector_spec.to_tool_list())
+    # Integrate the tool with the agent
+    agent = OpenAIAgent.from_tools(inspector_spec.to_tool_list())
     
-    # Make an introspection query using the agent
-    response = agent.chat(
-        'which fields will help me understand the usage of the protocol'
-    )
-    print(response)
+    # Send the user prompt to the agent
+    response = agent.chat(user_prompt)
+    return response
+
 
 if __name__ == "__main__":
-    simple_test()
+    
+    query = inspect_subgraph(
+        openai_api_key='YOUR_OPENAI_API_KEY',
+        playgrounds_api_key="YOUR_PLAYGROUNDS_API_KEY",
+        identifier="YOUR_SUBGRAPH_OR_DEPLOYMENT_IDENTIFIER",
+        use_deployment_id=False,
+        user_prompt='Which entities will help me understand the usage of Uniswap V3')
+    
+    print(query)
+    

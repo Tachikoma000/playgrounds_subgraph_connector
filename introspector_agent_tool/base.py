@@ -1,10 +1,10 @@
-"""PlaygroundsSubgraphIntrospectorToolSpec."""
+"""PlaygroundsSubgraphInspectorToolSpec."""
 
 from typing import Optional, Union
 import requests
 from llama_hub.tools.graphql.base import GraphQLToolSpec
 
-class PlaygroundsSubgraphIntrospectorToolSpec(GraphQLToolSpec):
+class PlaygroundsSubgraphInspectorToolSpec(GraphQLToolSpec):
     """
     Connects to subgraphs on The Graph's decentralized network via the Playgrounds API and introspects the subgraph.
     Provides functionalities to process and summarize the introspected schema for easy comprehension.
@@ -17,7 +17,7 @@ class PlaygroundsSubgraphIntrospectorToolSpec(GraphQLToolSpec):
     spec_functions = ["introspect_and_summarize_subgraph"]
 
     def __init__(self, identifier: str, api_key: str, use_deployment_id: bool = False):
-       """
+        """
         Initialize the connection to the specified subgraph on The Graph's network.
         
         Args:
