@@ -1,111 +1,201 @@
-# playgrounds_subgraph_connector
+# PlaygroundsSubgraphConnector
 
-Playgrounds API is a service provided by [Playgrounds Analytics](https://playgrounds.network) to streamline interfacing with decentralized subgraphs (indexed blockchain datasets).
+Playgrounds API is a service provided by [Playgrounds Analytics](https://playgrounds.network) that facilitates interfacing with decentralized subgraphs (indexed blockchain datasets).
 
-The `PlaygroundsSubgraphConnector` is a tool designed for LLM agents to seamlessly interface with and query subgraphs on The Graph's decentralized network via Playgrounds API.
+The `PlaygroundsSubgraphConnector` is a Python tool designed for LLM agents to seamlessly interface with and query subgraphs on The Graph's decentralized network via the Playgrounds API.
 
-This tool is specifically designed to be used alongside [Llama index](https://github.com/jerryjliu/llama_index) or [langchain](https://python.langchain.com/docs/modules/agents/tools/custom_tools)
+This tool is particularly designed to be used in conjunction with platforms like [Llama index](https://github.com/jerryjliu/llama_index) or [langchain](https://python.langchain.com/docs/modules/agents/tools/custom_tools).
 
-- To learn more about Playgrounds API, please visit our website : https://playgrounds.network/
-- Obtain you Playgrounds API Key and get started for free here: https://app.playgrounds.network/signup
-- Find any Subgraph (dataset) you need here: https://thegraph.com/explorer
+## Key Features:
+- **Direct access to Decentralized Subgraphs (Datasets)**: No need for wallet or GRT management. Access a vast range of blockchain datasets directly.
+- **LLM x Blockchain data**: Develop AI applications that leverage blockchain data effortlessly with the integrated tool.
 
-## Advantages of this tool:
+## Resources:
+- **Playgrounds Analytics**: To learn more about the Playgrounds API, visit the [official website](https://playgrounds.network/).
+- **Playgrounds API Key**: Obtain your Playgrounds API Key and get started for free [here](https://app.playgrounds.network/signup).
+- **OpenAI Key**: Obtain your API key from OpenAI: https://platform.openai.com/
+- **Subgraphs**: Discover and choose from a variety of Subgraphs (datasets) available on [The Graph's Explorer](https://thegraph.com/explorer).
 
-- **Easy access to Decentralized Subgraphs (Datasets)**: No need for wallet or GRT management.
-- **LLM x Blockchain data**: Develop Ai applications that leverage blockchain data seamlessly.
+## How to Use:
 
-## Basic Usage:
+1. **Initialization**: Begin by initializing the tool with the necessary `identifier` (either the Subgraph ID or Deployment ID) and your `api_key`.
+    ```python
+    connector_spec = PlaygroundsSubgraphConnectorToolSpec(
+        identifier="YOUR_SUBGRAPH_OR_DEPLOYMENT_IDENTIFIER", 
+        api_key="YOUR_PLAYGROUNDS_API_KEY"
+    )
+    ```
 
-To utilize the tool, simply initialize it with the appropriate `identifier` (Subgraph ID or Deployment ID) and `api_key`. Optionally, specify if you're using a deployment ID.
+2. **Optional Parameters**:
+   - `use_deployment_id`: Specify if you're using a deployment ID instead of a subgraph ID. Defaults to `False`.
+   - `log_level`: Adjust the logging level based on your debugging needs. 
+   - `paginate`: Decide if you want to paginate through the results. Defaults to `True`.
+
+3. **Querying**: Use the initialized tool to make queries and obtain blockchain data.
+    ```python
+    response = prompt_to_data(
+        prompt="Your query here...",
+        openai_key="YOUR_OPENAI_API_KEY",
+        identifier="YOUR_SUBGRAPH_OR_DEPLOYMENT_IDENTIFIER",
+        pg_key="YOUR_PLAYGROUNDS_API_KEY"
+    )
+    ```
+
+## Basic Example - See Notebook for full examples
 
 ```python
 import openai
+import logging
 from llama_index.agent import OpenAIAgent
-from base import PlaygroundsSubgraphConnector
+from base import PlaygroundsSubgraphConnectorToolSpec
 
-def simple_test():
+def prompt_to_data(prompt, openai_key, identifier, pg_key, use_deployment_id=False, log_level=logging.INFO, paginate=False):
     """
-    Run a simple test querying the financialsDailySnapshots from Uniswap V3 subgraph using OpenAIAgent and Playgrounds API.
-    """
-    # Set the OpenAI API key
-    openai.api_key = 'YOUR_OPENAI_API_KEY'
+    Query any decentralized subgraph using OpenAIAgent and Playgrounds API.
     
-    # Initialize the tool specification with the subgraph's identifier and the Playgrounds API key
-    connector_spec = PlaygroundsSubgraphConnector(
-        identifier="YOUR_SUBGRAPH_OR_DEPLOYMENT_IDENTIFIER", 
-        api_key="YOUR_PLAYGROUNDS_API_KEY", 
-        use_deployment_id=False  # Set to True if using Deployment ID
+    Args:
+        prompt (str): The query text to be used for the GraphQL request.
+        openai_key (str): The API key for OpenAI.
+        identifier (str): The identifier for the subgraph or deployment.
+        pg_key (str): The API key for Playgrounds.
+        use_deployment_id (bool, optional): Flag to use deployment id in the URL. Defaults to False.
+        log_level (int, optional): Logging level. Defaults to logging.INFO.
+        paginate (bool, optional): Flag to paginate the results. Defaults to False.
+        
+    Returns:
+        str: Agent's response.
+    """
+    
+    # Set the OpenAI API key
+    openai.api_key = openai_key
+    
+    # Initialize the tool specification with appropriate logging and pagination settings
+    connector_spec = PlaygroundsSubgraphConnectorToolSpec(
+        identifier=identifier, 
+        api_key=pg_key,
+        use_deployment_id=use_deployment_id,
+        log_level=log_level,
+        paginate=paginate
     )
     
     # Setup agent with the tool
     agent = OpenAIAgent.from_tools(connector_spec.to_tool_list())
     
     # Make a query using the agent
-    response = agent.chat(
-        'query the financialsDailySnapshots for id, timestamp, totalValueLockedUSD, and dailyVolumeUSD. only give me the first 2 rows'
-    )
-    print(response)
+    response = agent.chat(prompt)
+    return response
 
 if __name__ == "__main__":
-    simple_test()
-
+    logging.basicConfig(level=logging.DEBUG)
+    response = prompt_to_data(
+        prompt="query the financialsDailySnapshots for id, timestamp, totalValueLockedUSD, and dailyVolumeUSD. only give me the first 2 rows",
+        openai_key="YOUR_OPENAI_API_KEY",
+        identifier="YOUR_SUBGRAPH_OR_DEPLOYMENT_IDENTIFIER",
+        pg_key="YOUR_PLAYGROUNDS_API_KEY"
+    )
+    print(response)
 ```
 
 This loader is designed to be used as a way to load data into [LlamaIndex](https://github.com/jerryjliu/gpt_index/tree/main/gpt_index) 
 and/or subsequently used as a Tool in a [LangChain](https://github.com/hwchase17/langchain) Agent. 
 
 
-# playgrounds_subgraph_introspector
+# PlaygroundsSubgraphIntrospector
 
-Playgrounds API is a service provided by [Playgrounds Analytics](https://playgrounds.network) to facilitate interactions with decentralized subgraphs (indexed blockchain datasets).
+The `PlaygroundsSubgraphIntrospectorToolSpec` is a tool designed for LLM agents to introspect and gain insights into the schema of subgraphs on The Graph's decentralized network via the Playgrounds API.
 
-The `PlaygroundsSubgraphIntrospectorToolSpec` is a tool designed for LLM agents to introspect and understand the schema of subgraphs on The Graph's decentralized network via the Playgrounds API.
+Similar to `PlaygroundsSubgraphConnectorToolSpec`, This tool is for use with LLM development frameworks like [Llama index](https://github.com/jerryjliu/llama_index) or [langchain](https://python.langchain.com/docs/modules/agents/tools/custom_tools).
 
-This tool is specifically designed to be used alongside [Llama index](https://github.com/jerryjliu/llama_index) or [langchain](https://python.langchain.com/docs/modules/agents/tools/custom_tools).
+## Key Features:
+- **Introspection of Decentralized Subgraphs (Datasets)**: Easily understand and explore the schema of any subgraph.
+- **LLM x Blockchain Data**: Develop AI applications that harness introspective insights from blockchain data effortlessly.
 
-- To learn more about Playgrounds API, please visit our website: [Playgrounds Network](https://playgrounds.network/)
-- Obtain your Playgrounds API Key and get started for free [here](https://app.playgrounds.network/signup).
-- Discover any Subgraph (dataset) you need [here](https://thegraph.com/explorer).
+## Resources:
+- **Playgrounds Analytics**: To learn more about the Playgrounds API, delve into the [official website](https://playgrounds.network/).
+- **Playgrounds API Key**: Obtain your Playgrounds API Key and embark on your journey for free [here](https://app.playgrounds.network/signup).
+- **OpenAI Key**: Obtain your API key from OpenAI: https://platform.openai.com/
+- **Subgraphs**: Discover and select from a variety of Subgraphs (datasets) on [The Graph's Explorer](https://thegraph.com/explorer).
 
-## Advantages of this tool:
+## How to Use:
 
-- **Introspection of Decentralized Subgraphs (Datasets)**: Understand the schema of any subgraph without hassle.
-- **LLM x Blockchain Data**: Develop AI applications that leverage introspective insights from blockchain data.
-
-## Basic Usage:
-
-To utilize the tool, initialize it with the appropriate `identifier` (Subgraph ID or Deployment ID), `api_key`, and specify if you're using a deployment ID.
-```python
-import openai
-from llama_index.agent import OpenAIAgent
-from base import PlaygroundsSubgraphIntrospectorToolSpec
-
-def simple_test():
-    """
-    Run a simple test introspecting the Uniswap V3 subgraph schema using OpenAIAgent and Playgrounds API.
-    """
-    # Set the OpenAI API key
-    openai.api_key = 'YOUR_OPENAI_API_KEY'
-    
-    # Initialize the tool specification with the subgraph's identifier and the Playgrounds API key
+1. **Initialization**: Initialize the introspector tool with the required `identifier` (either the Subgraph ID or Deployment ID), `api_key`, and specify if you're using a deployment ID.
+    ```python
     introspector_spec = PlaygroundsSubgraphIntrospectorToolSpec(
         identifier="YOUR_SUBGRAPH_OR_DEPLOYMENT_IDENTIFIER", 
         api_key="YOUR_PLAYGROUNDS_API_KEY", 
-        use_deployment_id=False  # Set to True if using Deployment ID
+        use_deployment_id=False  # True if using Deployment ID
+    )
+    ```
+
+2. **Introspection**: With the initialized tool, perform introspection on the subgraph's schema.
+    ```python
+    response = inspect_subgraph(
+        openai_api_key='YOUR_OPENAI_API_KEY',
+        playgrounds_api_key="YOUR_PLAYGROUNDS_API_KEY",
+        identifier="YOUR_SUBGRAPH_OR_DEPLOYMENT_IDENTIFIER",
+        use_deployment_id=False,
+        user_prompt='Which entities will help me understand the usage of Uniswap V3?'
+    )
+    ```
+
+3. **Output**: The result provides a deeper understanding of the subgraph's schema, aiding in subsequent data queries and analysis.
+
+## Basic Example - See Notebook for full examples
+
+```python
+import openai
+import logging
+from llama_index.agent import OpenAIAgent
+from base import PlaygroundsSubgraphIntrospectorToolSpec
+
+def inspect_subgraph(prompt, openai_key, identifier, pg_key, use_deployment_id=False, log_level=logging.INFO):
+    """
+    Introspect a subgraph schema using OpenAIAgent and Playgrounds API based on the provided parameters.
+    
+    Args:
+        prompt (str): The user's question or prompt for the agent.
+        openai_key (str): API key for OpenAI.
+        identifier (str): Identifier for the subgraph or deployment.
+        pg_key (str): API key for Playgrounds.
+        use_deployment_id (bool, optional): If True, uses deployment ID in the URL. Defaults to False.
+        log_level (int, optional): Logging level. Defaults to logging.INFO.
+        
+    Returns:
+        str: Agent's response.
+    """
+    # Set the OpenAI API key
+    openai.api_key = openai_key
+    
+    # Initialize the introspector tool specification with the subgraph's identifier and the Playgrounds API key
+    introspector_spec = PlaygroundsSubgraphIntrospectorToolSpec(
+        identifier=identifier, 
+        api_key=pg_key, 
+        use_deployment_id=use_deployment_id,
+        log_level=log_level
     )
     
-    # Setup agent with the tool
+    # Integrate the introspector tool with the agent
     agent = OpenAIAgent.from_tools(introspector_spec.to_tool_list())
     
     # Make an introspection query using the agent
-    response = agent.chat(
-        'which fields will help me understand the usage of the protocol'
-    )
-    print(response)
+    response = agent.chat(prompt)
+    return response
 
 if __name__ == "__main__":
-    simple_test()
+    # Set up logging
+    logging.basicConfig(level=logging.DEBUG)
+
+    # Run the introspection function and print the result
+    result = inspect_subgraph(
+        prompt="Which entities will guide me in comprehending the usage of Uniswap V3?",
+        openai_key='YOUR_OPENAI_API_KEY',
+        identifier="YOUR_SUBGRAPH_OR_DEPLOYMENT_IDENTIFIER",
+        pg_key="YOUR_PLAYGROUNDS_API_KEY",
+        use_deployment_id=False,
+        log_level=logging.DEBUG
+    )
+    print(result)
 ```
 
-This introspector is designed to be used as a way to understand the schema of subgraphs and subgraph data being loaded into [LlamaIndex](https://github.com/jerryjliu/gpt_index/tree/main/gpt_index) and/or subsequently used as a Tool in a [LangChain](https://github.com/hwchase17/langchain) Agent. 
+This loader is designed to be used as a way to load data into [LlamaIndex](https://github.com/jerryjliu/gpt_index/tree/main/gpt_index) 
+and/or subsequently used as a Tool in a [LangChain](https://github.com/hwchase17/langchain) Agent. 
