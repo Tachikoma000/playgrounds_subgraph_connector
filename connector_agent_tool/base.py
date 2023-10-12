@@ -1,122 +1,86 @@
 """PlaygroundsSubgraphConnectorToolSpec."""
 
 from typing import Optional, Union
+
 import requests
-import logging
+
 from llama_hub.tools.graphql.base import GraphQLToolSpec
+
 
 class PlaygroundsSubgraphConnectorToolSpec(GraphQLToolSpec):
     """
-    A tool specification that provides connectivity to subgraphs on The Graph's decentralized network via the Playgrounds API.
-    This tool facilitates GraphQL queries to the specified subgraphs and supports pagination.
-    
+    Connects to subgraphs on The Graph's decentralized network via the Playgrounds API.
+
     Attributes:
-        spec_functions (list of str): The list of functions that this tool provides.
-        url (str): The endpoint URL to which GraphQL requests are sent.
-        headers (dict): Any necessary headers for the GraphQL requests, such as authentication.
+        spec_functions (list): List of functions that specify the tool's capabilities.
+        url (str): The endpoint URL for the GraphQL requests.
+        headers (dict): Headers used for the GraphQL requests.
     """
 
     spec_functions = ["graphql_request"]
 
-    def __init__(self, identifier: str, api_key: str, use_deployment_id: bool = False, log_level: int = logging.INFO, paginate: bool = True):
+    def __init__(self, identifier: str, api_key: str, use_deployment_id: bool = False):
         """
-        Initialize the PlaygroundsSubgraphConnector with necessary parameters.
+        Initialize the connector.
 
         Args:
-            identifier (str): Unique identifier for the subgraph or deployment.
-            api_key (str): API key to authenticate with the Playgrounds API.
-            use_deployment_id (bool, optional): Whether the provided identifier is a deployment ID. Defaults to False.
-            log_level (int, optional): Desired log level for the connector. Defaults to logging.INFO.
-            paginate (bool, optional): Whether to paginate the results if possible. Defaults to True.
+            identifier (str): Subgraph identifier or Deployment ID.
+            api_key (str): API key for the Playgrounds API.
+            use_deployment_id (bool): Flag to indicate if the identifier is a deployment ID. Default is False.
         """
-        
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(log_level)
-        self.paginate = paginate
-        
         endpoint = "deployments" if use_deployment_id else "subgraphs"
-        self.url = f"https://api.playgrounds.network/v1/proxy/{endpoint}/id/{identifier}"
+        self.url = (
+            f"https://api.playgrounds.network/v1/proxy/{endpoint}/id/{identifier}"
+        )
         self.headers = {
             "Content-Type": "application/json",
-            "Playgrounds-Api-Key": api_key
+            "Playgrounds-Api-Key": api_key,
         }
 
-    def graphql_request(self, query: str, variables: Optional[dict] = None, operation_name: Optional[str] = None) -> Union[dict, str]:
+    def graphql_request(
+        self,
+        query: str,
+        variables: Optional[dict] = None,
+        operation_name: Optional[str] = None,
+    ) -> Union[dict, str]:
         """
-        Execute a GraphQL query against the connected subgraph.
+        Make a GraphQL query.
 
         Args:
-            query (str): The GraphQL query string.
-            variables (dict, optional): Variables to be used in the GraphQL query. Defaults to None.
-            operation_name (str, optional): The name of the operation if the query string contains multiple operations. Defaults to None.
+            query (str): The GraphQL query string to execute.
+            variables (dict, optional): Variables for the GraphQL query. Default is None.
+            operation_name (str, optional): Name of the operation, if multiple operations are present in the query. Default is None.
 
         Returns:
-            dict: The response from the GraphQL server if the query is successful.
-            str: An error message if the query fails.
+            dict: The response from the GraphQL server if successful.
+            str: Error message if the request fails.
         """
+
+        payload = {"query": query.strip()}
+
+        if variables:
+            payload["variables"] = variables
+
+        if operation_name:
+            payload["operationName"] = operation_name
+
+        try:
+            TIMEOUT_SECONDS = 300 #5 mins timeout, the graph network can sometimes have unusually long response 
+            response = requests.post(self.url, headers=self.headers, json=payload, timeout=TIMEOUT_SECONDS)
+
+            # Check if the request was successful
+            response.raise_for_status()
+
+            # Return the JSON response
+            return response.json()
+
+        except requests.RequestException as e:
+            # Handle request errors
+            return str(e)
         
-        all_data = []
-        last_id = ""
-        loop_counter = 0
-        previous_data = None
-
-        # Loop to handle pagination
-        while True:
-            loop_counter += 1
-            if loop_counter > 10:  # safety mechanism to prevent infinite loops
-                self.logger.warning("Exiting loop after 10 iterations.")
-                break
-
-            # Prepare the request payload
-            payload = {"query": query.strip()}
-            if variables:
-                payload["variables"] = dict(variables)
-                payload["variables"]["id_gt"] = last_id
-            if operation_name:
-                payload["operationName"] = operation_name
-
-            self.logger.info(f"Sending GraphQL request to {self.url}")
-            
-            # Handle possible exceptions during the request
-            try:
-                response = requests.post(self.url, headers=self.headers, json=payload)
-                response.raise_for_status()
-                data = response.json()
-                self.logger.debug(f"Received data: {data}")
-
-                # If same data is received in consecutive queries, break out of the loop
-                if previous_data == data:
-                    self.logger.warning("Identical data received in consecutive queries. Exiting loop.")
-                    break
-                previous_data = data
-                
-                if 'errors' in data:
-                    self.logger.error(f"GraphQL errors: {data['errors']}")
-                    return data['errors']
-
-                # If pagination is not needed or data isn't present, return the data
-                if not self.paginate or not data.get("data"):
-                    return data
-
-                # If data is present and of type list, continue processing
-                if 'data' in data and isinstance(data["data"], list) and data["data"]:
-                    all_data.extend(data["data"])
-                    last_id = data["data"][-1]["id"]
-                    self.logger.debug(f"Last ID processed: {last_id}")
-                    if len(data["data"]) < 1000:  # 1000 is a common page size in GraphQL
-                        break
-
-            except requests.ConnectionError:
-                self.logger.error("Failed to connect to the server.")
-                return "Connection Error"
-            except requests.Timeout:
-                self.logger.error("Request timed out.")
-                return "Timeout Error"
-            except requests.RequestException as e:
-                self.logger.error(f"Error during request: {e}")
-                return str(e)
-            except ValueError as e:
-                self.logger.error(f"JSON decoding error: {e}")
-                return f"Decoding Error: {e}"
-
-        return {"data": all_data}
+        except requests.Timeout:
+            return "Request timed out"
+        
+        except ValueError as e:
+            # Handle JSON decoding errors
+            return f"Error decoding JSON: {e}"

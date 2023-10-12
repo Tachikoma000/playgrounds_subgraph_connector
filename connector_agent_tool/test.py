@@ -21,8 +21,6 @@ def simple_test():
         identifier="YOUR_SUBGRAPH_OR_DEPLOYMENT_IDENTIFIER", 
         api_key="YOUR_PLAYGROUNDS_API_KEY", 
         use_deployment_id=False,
-        log_level=logging.DEBUG,
-        paginate=False
     )
     
     # Setup agent with the tool
@@ -30,7 +28,7 @@ def simple_test():
     
     # Make a query using the agent
     response = agent.chat(
-        "query the financialsDailySnapshots for id, timestamp, totalValueLockedUSD, and dailyVolumeUSD. only give me the first 2 rows"
+        "query the financialsDailySnapshots for id, timestamp, totalDepositBalanceUSD, and totalBorrowBalanceUSD. only give me the first 2 rows"
     )
     print(response)
 
