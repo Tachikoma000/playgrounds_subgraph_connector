@@ -28,8 +28,6 @@ This tool is particularly designed to be used in conjunction with platforms like
 
 2. **Optional Parameters**:
    - `use_deployment_id`: Specify if you're using a deployment ID instead of a subgraph ID. Defaults to `False`.
-   - `log_level`: Adjust the logging level based on your debugging needs. 
-   - `paginate`: Decide if you want to paginate through the results. Defaults to `True`.
 
 3. **Querying**: Use the initialized tool to make queries and obtain blockchain data.
     ```python
@@ -45,11 +43,10 @@ This tool is particularly designed to be used in conjunction with platforms like
 
 ```python
 import openai
-import logging
 from llama_index.agent import OpenAIAgent
 from base import PlaygroundsSubgraphConnectorToolSpec
 
-def prompt_to_data(prompt, openai_key, identifier, pg_key, use_deployment_id=False, log_level=logging.INFO, paginate=False):
+def prompt_to_data(prompt, openai_key, identifier, pg_key, use_deployment_id=False):
     """
     Query any decentralized subgraph using OpenAIAgent and Playgrounds API.
     
@@ -59,8 +56,6 @@ def prompt_to_data(prompt, openai_key, identifier, pg_key, use_deployment_id=Fal
         identifier (str): The identifier for the subgraph or deployment.
         pg_key (str): The API key for Playgrounds.
         use_deployment_id (bool, optional): Flag to use deployment id in the URL. Defaults to False.
-        log_level (int, optional): Logging level. Defaults to logging.INFO.
-        paginate (bool, optional): Flag to paginate the results. Defaults to False.
         
     Returns:
         str: Agent's response.
@@ -74,8 +69,6 @@ def prompt_to_data(prompt, openai_key, identifier, pg_key, use_deployment_id=Fal
         identifier=identifier, 
         api_key=pg_key,
         use_deployment_id=use_deployment_id,
-        log_level=log_level,
-        paginate=paginate
     )
     
     # Setup agent with the tool
@@ -86,7 +79,6 @@ def prompt_to_data(prompt, openai_key, identifier, pg_key, use_deployment_id=Fal
     return response
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
     response = prompt_to_data(
         prompt="query the financialsDailySnapshots for id, timestamp, totalValueLockedUSD, and dailyVolumeUSD. only give me the first 2 rows",
         openai_key="YOUR_OPENAI_API_KEY",
@@ -144,11 +136,10 @@ Similar to `PlaygroundsSubgraphConnectorToolSpec`, This tool is for use with LLM
 
 ```python
 import openai
-import logging
 from llama_index.agent import OpenAIAgent
 from base import PlaygroundsSubgraphIntrospectorToolSpec
 
-def inspect_subgraph(prompt, openai_key, identifier, pg_key, use_deployment_id=False, log_level=logging.INFO):
+def inspect_subgraph(prompt, openai_key, identifier, pg_key, use_deployment_id=False):
     """
     Introspect a subgraph schema using OpenAIAgent and Playgrounds API based on the provided parameters.
     
@@ -158,7 +149,6 @@ def inspect_subgraph(prompt, openai_key, identifier, pg_key, use_deployment_id=F
         identifier (str): Identifier for the subgraph or deployment.
         pg_key (str): API key for Playgrounds.
         use_deployment_id (bool, optional): If True, uses deployment ID in the URL. Defaults to False.
-        log_level (int, optional): Logging level. Defaults to logging.INFO.
         
     Returns:
         str: Agent's response.
@@ -171,7 +161,6 @@ def inspect_subgraph(prompt, openai_key, identifier, pg_key, use_deployment_id=F
         identifier=identifier, 
         api_key=pg_key, 
         use_deployment_id=use_deployment_id,
-        log_level=log_level
     )
     
     # Integrate the introspector tool with the agent
@@ -182,8 +171,6 @@ def inspect_subgraph(prompt, openai_key, identifier, pg_key, use_deployment_id=F
     return response
 
 if __name__ == "__main__":
-    # Set up logging
-    logging.basicConfig(level=logging.DEBUG)
 
     # Run the introspection function and print the result
     result = inspect_subgraph(
@@ -192,7 +179,6 @@ if __name__ == "__main__":
         identifier="YOUR_SUBGRAPH_OR_DEPLOYMENT_IDENTIFIER",
         pg_key="YOUR_PLAYGROUNDS_API_KEY",
         use_deployment_id=False,
-        log_level=logging.DEBUG
     )
     print(result)
 ```
