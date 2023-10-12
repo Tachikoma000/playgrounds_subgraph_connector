@@ -2,6 +2,7 @@
 
 from typing import Optional, Union
 import requests
+import logging
 from llama_hub.tools.graphql.base import GraphQLToolSpec
 
 class PlaygroundsSubgraphConnectorToolSpec(GraphQLToolSpec):
@@ -13,10 +14,10 @@ class PlaygroundsSubgraphConnectorToolSpec(GraphQLToolSpec):
         url (str): The endpoint URL for the GraphQL requests.
         headers (dict): Headers used for the GraphQL requests.
     """
-    
+
     spec_functions = ["graphql_request"]
 
-    def __init__(self, identifier: str, api_key: str, use_deployment_id: bool = False):
+    def __init__(self, identifier: str, api_key: str, use_deployment_id: bool = False, log_level: int = logging.INFO):
         """
         Initialize the connector.
         
@@ -24,7 +25,15 @@ class PlaygroundsSubgraphConnectorToolSpec(GraphQLToolSpec):
             identifier (str): Subgraph identifier or Deployment ID.
             api_key (str): API key for the Playgrounds API.
             use_deployment_id (bool): Flag to indicate if the identifier is a deployment ID. Default is False.
+            log_level (int, optional): Logging level. Use constants from Python's logging module (e.g., logging.DEBUG, logging.INFO). Default is logging.INFO.
+        
+        Note:
+            To utilize the logging, set up a basic configuration at the entry point of your application using `logging.basicConfig(level=logging.DEBUG)` or any desired log level.
         """
+        
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(log_level)
+        
         endpoint = "deployments" if use_deployment_id else "subgraphs"
         self.url = f"https://api.playgrounds.network/v1/proxy/{endpoint}/id/{identifier}"
         self.headers = {
@@ -35,7 +44,7 @@ class PlaygroundsSubgraphConnectorToolSpec(GraphQLToolSpec):
     def graphql_request(self, query: str, variables: Optional[dict] = None, operation_name: Optional[str] = None) -> Union[dict, str]:
         """
         Make a GraphQL query.
-        
+
         Args:
             query (str): The GraphQL query string to execute.
             variables (dict, optional): Variables for the GraphQL query. Default is None.
@@ -45,27 +54,39 @@ class PlaygroundsSubgraphConnectorToolSpec(GraphQLToolSpec):
             dict: The response from the GraphQL server if successful.
             str: Error message if the request fails.
         """
-        
-        payload = {'query': query.strip()}
-        
+
+        payload = {"query": query.strip()}
         if variables:
-            payload['variables'] = variables
-            
+            payload["variables"] = variables
         if operation_name:
-            payload['operationName'] = operation_name
-        
+            payload["operationName"] = operation_name
+
+        self.logger.info(f"Sending GraphQL request to {self.url} with query: {query}")
+
         try:
             response = requests.post(self.url, headers=self.headers, json=payload)
-            
-            # Check if the request was successful
-            response.raise_for_status()
+            response.raise_for_status()  # Raises an HTTPError if the HTTP request returned an unsuccessful status code
 
-            # Return the JSON response
-            return response.json()
+            data = response.json()
+            if 'errors' in data:
+                self.logger.error(f"GraphQL errors: {data['errors']}")
+                return data['errors']
+
+            self.logger.info(f"Successfully retrieved data from {self.url}")
+            return data
+
+        except requests.ConnectionError:
+            self.logger.error("Failed to connect to the server.")
+            return "Connection Error"
+
+        except requests.Timeout:
+            self.logger.error("Request timed out.")
+            return "Timeout Error"
 
         except requests.RequestException as e:
-            # Handle request errors
+            self.logger.error(f"Error occurred while making the request: {e}")
             return str(e)
+
         except ValueError as e:
-            # Handle JSON decoding errors
+            self.logger.error(f"Error decoding JSON: {e}")
             return f"Error decoding JSON: {e}"

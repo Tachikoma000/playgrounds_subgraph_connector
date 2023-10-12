@@ -2,6 +2,7 @@
 
 from typing import Optional, Union
 import requests
+import logging
 from llama_hub.tools.graphql.base import GraphQLToolSpec
 
 class PlaygroundsSubgraphInspectorToolSpec(GraphQLToolSpec):
@@ -16,7 +17,7 @@ class PlaygroundsSubgraphInspectorToolSpec(GraphQLToolSpec):
     """
     spec_functions = ["introspect_and_summarize_subgraph"]
 
-    def __init__(self, identifier: str, api_key: str, use_deployment_id: bool = False):
+    def __init__(self, identifier: str, api_key: str, use_deployment_id: bool = False, log_level: int = logging.INFO):
         """
         Initialize the connection to the specified subgraph on The Graph's network.
         
@@ -24,7 +25,14 @@ class PlaygroundsSubgraphInspectorToolSpec(GraphQLToolSpec):
             identifier (str): The subgraph's identifier or deployment ID.
             api_key (str): API key for the Playgrounds API.
             use_deployment_id (bool): If True, treats the identifier as a deployment ID. Default is False.
+            log_level (int, optional): Logging level. Use constants from Python's logging module (e.g., logging.DEBUG, logging.INFO). Default is logging.INFO.
+        
+        Note:
+            To utilize the logging, set up a basic configuration at the entry point of your application using `logging.basicConfig(level=logging.DEBUG)` or any desired log level.
         """
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(log_level)
+        
         self.url = self._generate_url(identifier, use_deployment_id)
         self.headers = {
             "Content-Type": "application/json",

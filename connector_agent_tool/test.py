@@ -1,6 +1,9 @@
 import openai
+import logging
 from llama_index.agent import OpenAIAgent
 from base import PlaygroundsSubgraphConnectorToolSpec
+
+logging.basicConfig(level=logging.DEBUG)
 
 """
 SIMPLE TEST 
@@ -14,10 +17,11 @@ def simple_test():
     openai.api_key = 'YOUR_OPENAI_API_KEY'
     
     # Initialize the tool specification
-    connector_spec = PlaygroundsSubgraphConnector(
+    connector_spec = PlaygroundsSubgraphConnectorToolSpec(
         identifier="YOUR_SUBGRAPH_OR_DEPLOYMENT_IDENTIFIER", 
         api_key="YOUR_PLAYGROUNDS_API_KEY", 
-        use_deployment_id=False
+        use_deployment_id=False,
+        log_level=logging.DEBUG
     )
     
     # Setup agent with the tool
